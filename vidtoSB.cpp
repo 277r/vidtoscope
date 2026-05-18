@@ -138,11 +138,16 @@ int main(int argc, char *argv[])
         tinc++;
     }
     // deltaTs now contains the relative data lengths.
+    for (int i = 0; i < hits; i++){
+        std::cout << deltaTs[i] << ", ";
+        if (deltaTs[i] == 0){
+            deltaTs[i]++;
+        }    
+    }
 
 
 
-
-    uint32_t duration = entrylist / 96000;
+    uint32_t duration = hits / 30;
     uint32_t rate = 96000;  // Sample rate
     uint32_t frame_count = duration * rate;
     uint16_t chan_num = 2;  // Number of channels
@@ -156,16 +161,20 @@ int main(int argc, char *argv[])
     float *channel1 = (float *) malloc(frame_count * sizeof(float));
     float *channel2 = (float *) malloc(frame_count * sizeof(float));
 
-    // 
-    for (uint32_t i=0; i < entrylist; i++) {
-
-        
-        // requires value between 0 and 1;
-        channel1[i] = (float) indexA[i];
-        channel2[i] = (float) indexB[i];
-        channel1[i] /= height;
-        channel2[i] /= width;
-        
+    // amount of samples in a video frame
+    int hitsize = rate / 30;
+    int objT = 0;
+    
+    // for every hit, take the data inside and multiply by the time
+    for (int i = 0; i < hits; i++){
+        for (int j = 0; j < hitsize; j++){
+            // channel1 data section of video frame time gets rotationally filled with data from indexA
+            channel1[i*hitsize+j] =  indexA[objT+ (j % deltaTs[i])];   
+            channel2[i*hitsize+j] =  indexB[objT+ (j % deltaTs[i])];   
+            channel1[i*hitsize+j] /= height;
+            channel2[i*hitsize+j] /= width;
+        }
+        objT += deltaTs[i];
 
     }
 
