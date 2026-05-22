@@ -220,13 +220,31 @@ int main(int argc, char *argv[])
     
     // for every hit, take the data inside and multiply by the time
     for (int i = 0; i < hits; i++){
-        for (int j = 0; j < hitsize; j++){
-            // channel1 data section of video frame time gets rotationally filled with data from indexA
-            channel1[int(i*hitsize)+j] =  indexA[objT+ (j % deltaTs[i])];   
-            channel2[int(i*hitsize)+j] =  indexB[objT+ (j % deltaTs[i])];   
-            channel1[int(i*hitsize)+j] /= height;
-            channel2[int(i*hitsize)+j] /= width;
+        // if frame data fits in audio data
+        if (deltaTs[i] < hitsize){
+            for (int j = 0; j < hitsize; j++){
+                // channel1 data section of video frame time gets rotationally filled with data from indexA
+                channel1[int(i*hitsize)+j] =  indexA[objT+ (j % deltaTs[i])];   
+                channel2[int(i*hitsize)+j] =  indexB[objT+ (j % deltaTs[i])];   
+                channel1[int(i*hitsize)+j] /= height;
+                channel2[int(i*hitsize)+j] /= width;
+            }
         }
+        else {
+            float multiplier = ((float)deltaTs[i]) / hitsize;
+
+            for (int j = 0; j < hitsize; j++){
+                // channel1 data section of video frame time gets rotationally filled with data from indexA
+                channel1[int(i*hitsize)+j] =  indexA[objT+ (int(j*multiplier) % deltaTs[i])];   
+                channel2[int(i*hitsize)+j] =  indexB[objT+ (int(j*multiplier) % deltaTs[i])];   
+                channel1[int(i*hitsize)+j] /= height;
+                channel2[int(i*hitsize)+j] /= width;
+            }
+        }
+        
+
+        
+        
         objT += deltaTs[i];
 
     }
