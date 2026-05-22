@@ -210,7 +210,6 @@ int main(int argc, char *argv[])
     float sync_level = 1.0;
     // scales signal to use full 16bit resolution
     float multiplier = 32767 / sync_level;
-
     float *channel1 = (float *) malloc(frame_count * sizeof(float));
     float *channel2 = (float *) malloc(frame_count * sizeof(float));
 
@@ -231,12 +230,12 @@ int main(int argc, char *argv[])
             }
         }
         else {
-            float multiplier = ((float)deltaTs[i]) / hitsize;
+            float mp = ((float)deltaTs[i]) / hitsize;
 
             for (int j = 0; j < hitsize; j++){
                 // channel1 data section of video frame time gets rotationally filled with data from indexA
-                channel1[int(i*hitsize)+j] =  indexA[objT+ (int(j*multiplier) % deltaTs[i])];   
-                channel2[int(i*hitsize)+j] =  indexB[objT+ (int(j*multiplier) % deltaTs[i])];   
+                channel1[int(i*hitsize)+j] =  indexA[objT+ (int(j*mp) % deltaTs[i])];   
+                channel2[int(i*hitsize)+j] =  indexB[objT+ (int(j*mp) % deltaTs[i])];   
                 channel1[int(i*hitsize)+j] /= height;
                 channel2[int(i*hitsize)+j] /= width;
             }
@@ -286,9 +285,7 @@ int main(int argc, char *argv[])
         byte = (channel2[i] * multiplier);
         fwrite(&byte, 2, 1, fp);
     }
-
+    // deallocating channel1 pointer causes `Munmap_Chunk(): Invalid Pointer` -> Sigabort. After an hour of debugging i gave up and let the operating system handle it. 
     fclose(fp);
-    free(channel1);
-    free(channel2);
     return 0;
 }
