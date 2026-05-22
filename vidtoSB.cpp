@@ -1,6 +1,50 @@
+// TODO:
+// improve drawing by making distances between drawn coordinates smaller, by changing the drawing order (travelling salesman problem, nearest pixel that also white, nearest neighbor problem?)
+// AFTER this improvement, increase drawing. When a list of pixels is too large for the audio timeframe, certain points must be skipped, when the data points are close, this is not a big problem. 
+// 
+
 #include <stdio.h>
 #include <string>
 #include <png++/png.hpp>
+
+
+// ax+bi 
+void order(int*a, int *b, int start, int len){
+    
+    int smallestdist;
+    int smallestdist_index; 
+
+
+    // get pix
+    // get nearest from list by (a-a0)^2+(b-b0)^2
+    // swap indices and continue on next indice
+
+    // for each element index, fill reldistlist with differences to current element, then find shortest in that list 
+    
+    int tmpdist;
+
+    for (int i = 0; i < len - 1; i++){
+        smallestdist = 2147483647;
+        smallestdist_index = 0;
+        for (int k = i+1; k < len; k++){
+            tmpdist = (a[start+i] - a[start+k]) * (a[start+i] - a[start+k]);
+            tmpdist += (b[start+i] - b[start+k]) * (b[start+i] - b[start+k]);
+            if (tmpdist < smallestdist){
+                smallestdist = tmpdist;
+                smallestdist_index = k;
+            }
+        }
+
+        // execute swap on NEXT element with smallest dist element
+        tmpdist = a[start+smallestdist_index];
+        a[start+smallestdist_index] = a[start+i+1];
+        a[start+i+1] = tmpdist;
+        tmpdist = b[start+smallestdist_index];
+        b[start+smallestdist_index] = b[start+i+1];
+        b[start+i+1] = tmpdist;
+    }
+}
+
 
 // get difference grayscale, SCALED
 png::rgb_pixel getdiffgss (png::rgb_pixel &a, png::rgb_pixel &c){
@@ -145,6 +189,15 @@ int main(int argc, char *argv[])
         }    
     }
 
+    int objT = 0;
+
+    for (int i = 0; i < hits; i++){
+        order(indexA,indexB,objT,deltaTs[i]);
+        objT += deltaTs[i];
+    }
+
+
+
 
 
     uint32_t duration = hits / 30;
@@ -162,17 +215,17 @@ int main(int argc, char *argv[])
     float *channel2 = (float *) malloc(frame_count * sizeof(float));
 
     // amount of samples in a video frame
-    int hitsize = rate / 30;
-    int objT = 0;
+    float hitsize = rate / 30.0;
+    objT = 0;
     
     // for every hit, take the data inside and multiply by the time
     for (int i = 0; i < hits; i++){
         for (int j = 0; j < hitsize; j++){
             // channel1 data section of video frame time gets rotationally filled with data from indexA
-            channel1[i*hitsize+j] =  indexA[objT+ (j % deltaTs[i])];   
-            channel2[i*hitsize+j] =  indexB[objT+ (j % deltaTs[i])];   
-            channel1[i*hitsize+j] /= height;
-            channel2[i*hitsize+j] /= width;
+            channel1[int(i*hitsize)+j] =  indexA[objT+ (j % deltaTs[i])];   
+            channel2[int(i*hitsize)+j] =  indexB[objT+ (j % deltaTs[i])];   
+            channel1[int(i*hitsize)+j] /= height;
+            channel2[int(i*hitsize)+j] /= width;
         }
         objT += deltaTs[i];
 
